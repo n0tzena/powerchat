@@ -8,8 +8,56 @@
                 margin: 0; 
                 padding-bottom: 3rem; 
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-                background-color: black;
+                background-color: #010409;
                 color: white;
+            }
+
+            #main
+            {
+                width: calc(100vw - 200px);
+                overflow-y: scroll;
+            }
+            #rightMenu
+            {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 0px; right: 0px;
+                width: 200px;
+                height: 100vh;
+            }
+            #onlineNumber
+            {
+                margin: 20px 8px;
+            }
+            #onlineList
+            {
+                list-style-type: none;
+                margin: 0 8px;
+                padding: 0;
+            }
+            #onlineList > li
+            {
+                font-size: 12px;
+                padding: 2px 4px;
+            }
+            .configButtons
+            {
+                margin-top: auto;
+                margin-bottom: 10px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .configButtons img
+            {
+                display: block;
+            }
+            .configButtons img:hover
+            {
+                cursor: pointer;
+                background-color: #0d1117;
+                border-radius: 50%;
             }
 
             #form 
@@ -17,6 +65,7 @@
                 background: rgba(0, 0, 0, 0.15); 
                 padding: 0.25rem; 
                 position: fixed; 
+                width: calc(100vw - 200px);
                 bottom: 0; left: 0; right: 0; 
                 display: flex; 
                 height: 3rem; 
@@ -25,11 +74,13 @@
             }
             #input 
             { 
-                border: none; 
+                border: 1px white solid;
                 padding: 0 1rem; 
                 flex-grow: 1; 
                 border-radius: 2rem; 
                 margin: 0.25rem; 
+                background-color: black;
+                color: white;
             }
             #input:focus 
             { 
@@ -37,21 +88,33 @@
             }
             #form > button 
             { 
-                background: #333; 
                 border: none; 
                 padding: 0 1rem; 
                 margin: 0.25rem; 
-                border-radius: 3px; 
+                border-radius: 2rem; 
                 outline: none; 
-                color: #fff; 
+                background-color: black;
+                color: white;
+                border: 1px white solid;
+                cursor: pointer;
+            }
+            #form > button:hover
+            {
+                background-color: rgb(3, 17, 24);
+                transition: 0.2s;
             }
 
-            #messages { list-style-type: none; margin: 0; padding: 0; }
+            #messages { 
+                list-style-type: none; 
+                margin: 0; 
+                padding: 0;
+                height: calc(100vh - 3rem); 
+            }
             #messages > li 
             {
                 display: flex;
             }
-            #messages > li:nth-child(odd) { background: #1b1b1b; }
+            #messages > li:nth-child(odd) { background: #0d1117; }
 
             #messages > li > img 
             {
@@ -59,9 +122,33 @@
                 height: 48px;
             }
 
+            .user-div
+            {
+                display: flex;
+                align-items: center;
+            }
+
+            .message-text
+            {
+                margin-left: 5px;
+            }
+
             .username
             {
-                display: block;
+                color: white;
+            }
+
+            .timestamp
+            {
+                font-size: 10px;
+                color: #a7a7a7;
+                margin: 0 5px;
+            }
+
+            .idtext
+            {
+                font-size: 10px;
+                color: #a7a7a7;
             }
 
             .message
@@ -73,55 +160,93 @@
     </head>
     <body>
         <div id="main"> 
-            <ul id="messages">
-                <li>
-                    <!--img src="https://i.imgur.com/aKbmQcN.png">
-                    <div>
-                        <span class="username">Username - 11:00</span>
-                        <span class="message">Message</span>
-                    </div-->
-                </li>
-            </ul>
+            <ul id="messages"></ul>
             <form id="form" action="">
-            <input id="input" autocomplete="off" /><button>Send</button>
+                <input id="input" autocomplete="off" /><button>Enviar Mensagem</button>
             </form>
         </div>
-
-        <script src="/socket.io/socket.io.js"></script>
-        <script>
-
+        <div id="rightMenu">
+            <h1 id="onlineNumber">Online</h1>
+            <ul id="onlineList">
+                <li>Teste</li>
+                <li>Teste</li>
+                <li>Teste</li>
+            </ul>
+            <div class="configButtons">
+                <img onclick="setupAccount();" src="/assets/images/person_edit_48dp_E3E3E3_FILL0_wght100_GRAD0_opsz48.png">
+            </div>
+        </div>
+        <script type="text/javascript">
             var username = localStorage.getItem("username");
             var avatarURL = localStorage.getItem("avatarURL");
 
             function setupAccount()
             {
                 username = prompt("Insira seu nome de usuário: ");
-                avatarURL = prompt("Insira a URL de uma imagem para ser seu avatar: ");
+                avatarURL = prompt("Insira a URL de uma imagem para ser seu avatar (Imgur, Base64, etc. Se o campo estiver vazio, usará uma imagem padrão.): ");
+
+                if(username == null || username == "" || username == "null")
+                    username = "Usuário Desconhecido";
+
+                if(avatarURL == null || avatarURL == "" || avatarURL == "null")
+                    avatarURL = "/assets/images/person_48dp_E3E3E3_FILL0_wght100_GRAD0_opsz48.png";
 
                 localStorage.setItem("username", username);
                 localStorage.setItem("avatarURL", avatarURL);
             }
+        </script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script type="text/javascript">
 
             function createMessage(message)
             {
                 var item = document.createElement('li');
                 var avatar = document.createElement('img');
                 var textDiv = document.createElement('div');
+                textDiv.classList.add('message-text')
+
+                var userDiv = document.createElement('div');
+                userDiv.classList.add('user-div')
 
                 var usernameText = document.createElement('span');
                 usernameText.classList.add('username');
+                var timestampText = document.createElement('span');
+                timestampText.classList.add('timestamp');
+                var idText = document.createElement('span');
+                idText.classList.add('idtext');
 
                 var messageText = document.createElement('span');
                 messageText.classList.add('message');
 
                 item.append(avatar);
                 item.append(textDiv);
-                textDiv.append(usernameText);
+
+                textDiv.append(userDiv);
                 textDiv.append(messageText);
+
+                userDiv.append(usernameText);
+                userDiv.append(timestampText);
+                userDiv.append(idText);
 
                 avatar.src = message.msgAvatar;
                 usernameText.textContent = message.msgUser;
                 messageText.textContent = message.msg;
+                timestampText.textContent = ` [${message.timestamp.slice(0, 8)}]`;
+                idText.textContent = message.socketId;
+
+                return item;
+            }
+
+            function createOnlineStatus(status)
+            {
+                item = document.createElement("li");
+                statusText = document.createElement("span");
+
+                item.append(statusText);
+
+                statusText.textContent = status;
+                if(status == socket.id)
+                    statusText.textContent = `Você (${status})`;
 
                 return item;
             }
@@ -131,7 +256,10 @@
 
             var socket = io();
 
+            var mainDiv = document.getElementById('main');
             var messages = document.getElementById('messages');
+            var onlineList = document.getElementById('onlineList');
+            var onlineNumber = document.getElementById('onlineNumber');
             var form = document.getElementById('form');
             var input = document.getElementById('input');
 
@@ -139,12 +267,12 @@
                 e.preventDefault();
                 if(input.value)
                 {
-                    const now = new Date();
-
                     var messageObject = {
-                        msgUser: `${username} - ${now.getHours()}:${now.getMinutes()}`,
+                        msgUser: username,
                         msgAvatar: avatarURL,
-                        msg: input.value
+                        msg: input.value,
+                        socketId: socket.id,
+                        timestamp: new Date().toTimeString()
                     }
 
                     socket.emit('chat message', messageObject);
@@ -152,9 +280,25 @@
                 }
             });
 
+            socket.on('message history', (msgArray) => {
+                msgArray.forEach(msg => {
+                    messages.appendChild(createMessage(msg));
+                });
+                messages.scrollTo(0, document.body.scrollHeight);
+            });
+
+            socket.on('online status', (onlineIds => {
+                onlineList.textContent = '';
+                onlineNumber.textContent = `Online - ${onlineIds.length}`;
+                
+                onlineIds.forEach(id => {
+                    onlineList.appendChild(createOnlineStatus(id));
+                });
+            }))
+
             socket.on('chat message', (msg) => {
                 messages.appendChild(createMessage(msg));
-                window.scrollTo(0, document.body.scrollHeight);
+                mainDiv.scrollTo(0, mainDiv.scrollHeight);
             });
 
         </script>
